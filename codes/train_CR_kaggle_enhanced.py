@@ -52,7 +52,7 @@ def seed_torch(seed=42):
 ##********** Configure training settings ************##
 ##===================================================##
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_sz', type=int, default=8, help='batch size (increased for efficiency)')
+parser.add_argument('--batch_sz', type=int, default=4, help='batch size per GPU (reduced to prevent OOM)')
 parser.add_argument('--num_workers', type=int, default=4, help='number of data loading workers')
 
 parser.add_argument('--load_size', type=int, default=256)
@@ -179,9 +179,12 @@ def save_checkpoint(model, optimizer, scheduler, epoch, val_psnr, best_val_psnr,
     """Save training checkpoint"""
     os.makedirs(opts.save_model_dir, exist_ok=True)
     
+    # Unwrap DataParallel if needed
+    model_to_save = model.module if isinstance(model, nn.DataParallel) else model
+    
     checkpoint = {
         'epoch': epoch,
-        'model_state_dict': model.state_dict(),
+        'model_state_dict': model_to_save.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
         'scheduler_state_dict': scheduler.state_dict(),
         'val_psnr': val_psnr,
@@ -226,10 +229,14 @@ if __name__ == '__main__':
     ##*************** Setup device **********************##
     ##===================================================##
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    num_gpus = torch.cuda.device_count()
     print(f"Using device: {device}")
     if torch.cuda.is_available():
-        print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB\n")
+        print(f"Number of GPUs available: {num_gpus}")
+        for i in range(num_gpus):
+            print(f"  GPU {i}: {torch.cuda.get_device_name(i)}")
+            print(f"  GPU {i} Memory: {torch.cuda.get_device_properties(i).total_memory / 1e9:.2f} GB")
+        print()
 
     ##===================================================##
     ##*************** Create dataloader *****************##
@@ -304,9 +311,16 @@ if __name__ == '__main__':
         proj_drop=0.1
     ).to(device)
     
+    # Wrap model with DataParallel for multi-GPU
+    if num_gpus > 1:
+        print(f"Using DataParallel on {num_gpus} GPUs")
+        model = nn.DataParallel(model)
+        print(f"Effective batch size: {opts.batch_sz} x {num_gpus} = {opts.batch_sz * num_gpus}\n")
+    
     # Count parameters
-    total_params = sum(p.numel() for p in model.parameters())
-    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    model_for_count = model.module if isinstance(model, nn.DataParallel) else model
+    total_params = sum(p.numel() for p in model_for_count.parameters())
+    trainable_params = sum(p.numel() for p in model_for_count.parameters() if p.requires_grad)
     print(f"Total parameters: {total_params/1e6:.2f}M")
     print(f"Trainable parameters: {trainable_params/1e6:.2f}M\n")
 
@@ -456,8 +470,8 @@ if __name__ == '__main__':
                 
                 optimizer.zero_grad()
                 
-                # Forward pass with AMP
-                with torch.cuda.amp.autocast(enabled=opts.use_amp):
+                # Forward pass with AMP (updated for PyTorch 2.x)
+                with torch.amp.autocast('cuda', enabled=opts.use_amp):
                     pred = model(cloudy_optical, sar_img)
                     loss, loss_dict = criterion(pred, cloudfree_data)
                 
