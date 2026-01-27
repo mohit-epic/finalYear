@@ -63,14 +63,14 @@ class OpticalEncoder(nn.Module):
         # E1: input (13, H, W) -> output (64, H, W)
         self.E1 = ResBlock(13, 64, kernel_size=3, stride=1, padding=1)
         
-        # Downsample 1
-        self.down1 = nn.MaxPool2d(2, 2)
+        # Downsample 1 - Learnable strided convolution instead of MaxPool
+        self.down1 = nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1)
         
         # E2: input (64, H/2, W/2) -> output (128, H/2, W/2)
         self.E2 = ResBlock(64, 128, kernel_size=3, stride=1, padding=1)
         
-        # Downsample 2
-        self.down2 = nn.MaxPool2d(2, 2)
+        # Downsample 2 - Learnable strided convolution instead of MaxPool
+        self.down2 = nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1)
         
         # E3: input (128, H/4, W/4) -> output (256, H/4, W/4)
         self.E3 = ResBlock(128, 256, kernel_size=3, stride=1, padding=1)
@@ -121,10 +121,12 @@ class SAREncoder(nn.Module):
         # E1: input (2, H, W) -> output (64, H, W)
         self.E1 = ResBlock(2, 64, kernel_size=3, stride=1, padding=1)
         
-        self.down1 = nn.MaxPool2d(2, 2)
+        # Downsample 1 - Learnable strided convolution instead of MaxPool
+        self.down1 = nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1)
         self.E2 = ResBlock(64, 128, kernel_size=3, stride=1, padding=1)
         
-        self.down2 = nn.MaxPool2d(2, 2)
+        # Downsample 2 - Learnable strided convolution instead of MaxPool
+        self.down2 = nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1)
         self.E3 = ResBlock(128, 256, kernel_size=3, stride=1, padding=1)
         
     def forward(self, x):
@@ -356,6 +358,9 @@ class CloudRemovalCrossAttention(nn.Module):
     """
     Complete Cloud Removal Network
     Integrated Improvements: ResBlocks, Transformer Attn, Opt-Guided Gating, Global Residual
+    Enhanced with:
+    - Strided convolutions for better detail preservation
+    - 1x1 projection for SAR-optical feature alignment
     """
     
     def __init__(self, num_heads=8, qkv_bias=True, qk_scale=None, 
@@ -375,6 +380,9 @@ class CloudRemovalCrossAttention(nn.Module):
             proj_drop=proj_drop
         )
         
+        # 1x1 Projection after cross-attention to align SAR-optical distributions
+        self.fuse_proj = nn.Conv2d(256, 256, kernel_size=1)
+        
         # Enhanced Gating
         self.speckle_gating = SpeckleAwareGatingModule(dim=256)
         
@@ -393,6 +401,9 @@ class CloudRemovalCrossAttention(nn.Module):
         # 2. Transformer Cross Attention
         # Note: feat_opt_3 is Query, feat_sar_3 is Key/Value context
         cross_out = self.cross_attn(feat_opt_3, feat_sar_3)
+        
+        # 2.5. Feature alignment projection (aligns SAR-optical distributions)
+        cross_out = self.fuse_proj(cross_out)
         
         # 3. Optical-Guided Gating
         # We pass feat_opt_3 as context so gating knows what look like clouds vs features
