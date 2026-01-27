@@ -16,6 +16,7 @@ import argparse
 import numpy as np
 import json
 import math
+import random
 from datetime import datetime
 import time
 from tqdm import tqdm
@@ -33,6 +34,19 @@ from dataloader import *
 from metrics import *
 from net_CR_CrossAttention import CloudRemovalCrossAttention
 from loss_functions import get_cloud_removal_loss
+
+##===================================================##
+##************** Utility Functions ******************##
+##===================================================##
+def seed_torch(seed=42):
+    """Set random seeds for reproducibility"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 ##===================================================##
 ##********** Configure training settings ************##
