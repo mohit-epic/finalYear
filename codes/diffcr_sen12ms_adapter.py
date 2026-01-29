@@ -29,9 +29,9 @@ class SEN12MS_CR_RGB(data.Dataset):
         
         csv_file.close()
         
-        # Optional: Limit samples for quick testing
-        # Uncomment the next line to test on only 50 samples
-        # self.filepair = self.filepair[:50]
+        # Limit to 50 samples for faster testing (~2 minutes instead of 4 hours)
+        # Comment out the next line to test on all samples
+        self.filepair = self.filepair[:50]
         
         print(f"Loaded {len(self.filepair)} {mode} samples from SEN12MS-CR")
     
