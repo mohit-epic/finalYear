@@ -1,0 +1,73 @@
+{
+    "name": "sen12ms_cr_diffcr_test",
+    "gpu_ids": [0],
+    "seed": -1,
+    "finetune_norm": false,
+    "path": {
+        "base_dir": "experiments",
+        "code": "code",
+        "tb_logger": "tb_logger",
+        "results": "results",
+        "checkpoint": "checkpoint",
+        "resume_state": "/kaggle/input/diffcr/pytorch/default/1/diffcr_new.pth"
+    },
+    "datasets": {
+        "test": {
+            "which_dataset": {
+                "name": "SEN12MS_CR_RGB",
+                "args": {
+                    "data_root": "/kaggle/input/sen12ms-cr-winter",
+                    "mode": "test",
+                    "data_csv": "/kaggle/working/data.csv"
+                }
+            },
+            "dataloader": {
+                "args": {
+                    "batch_size": 1,
+                    "num_workers": 2,
+                    "pin_memory": true
+                }
+            }
+        }
+    },
+    "model": {
+        "which_model": {
+            "name": ["models.model", "Palette"],
+            "args": {
+                "sample_num": 8,
+                "task": "decloud",
+                "ema_scheduler": {
+                    "ema_start": 1,
+                    "ema_iter": 1,
+                    "ema_decay": 0.9999
+                }
+            }
+        },
+        "which_networks": [
+            {
+                "name": ["models.network_x0_dpm_solver", "Network"],
+                "args": {
+                    "init_type": "kaiming",
+                    "module_name": "ours_double_encoder_splitcaCond_splitcaUnet",
+                    "unet": {
+                        "img_channel": 3,
+                        "width": 64,
+                        "middle_blk_num": 1,
+                        "enc_blk_nums": [1, 1, 1, 1],
+                        "dec_blk_nums": [1, 1, 1, 1]
+                    },
+                    "beta_schedule": {
+                        "test": {
+                            "schedule": "sigmoid",
+                            "n_timestep": 1000,
+                            "linear_start": 0.0001,
+                            "linear_end": 0.09
+                        }
+                    }
+                }
+            }
+        ],
+        "which_losses": ["mse_loss"],
+        "which_metrics": ["mae"]
+    }
+}
