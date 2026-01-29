@@ -69,7 +69,7 @@
                 ],
                 "args": {
                     "init_type": "kaiming",
-                    "module_name": "ours_double_encoder_splitcaCond_splitcaUnet",
+                    "module_name": "conv2former",
                     "unet": {
                         "img_channel": 3,
                         "width": 64,
