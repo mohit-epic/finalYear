@@ -51,11 +51,15 @@ def calculate_ssim(img1, img2):
     return float(ssim_map.mean())
 
 # Find output directory
-results_dir = "/kaggle/working/finalYear/codes/DiffCR/experiments/sen12ms_cr_diffcr_test/results/test"
+results_dir = "/kaggle/working/diffcr_results"
 
 if not os.path.exists(results_dir):
-    print(f"Results directory not found: {results_dir}")
-    sys.exit(1)
+    # Try alternative location
+    results_dir = "/kaggle/working/finalYear/codes/DiffCR/experiments/sen12ms_cr_diffcr_test/results/test"
+    if not os.path.exists(results_dir):
+        print(f"Results directory not found!")
+        print(f"Please check where the results are saved.")
+        sys.exit(1)
 
 # Find GT and output images
 gt_files = sorted(glob.glob(os.path.join(results_dir, "GT_*.tif")))
