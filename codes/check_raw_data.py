@@ -6,12 +6,26 @@ Check raw SEN12MS-CR data values before normalization
 import tifffile
 import numpy as np
 
-# Load a sample image
-img_path = "/kaggle/input/sen12ms-cr-winter/ROIs0000_0/s2_0_p0.tif"
+import glob
+import os
+import sys
 
-print("=" * 60)
-print("Raw SEN12MS-CR Data Analysis")
-print("=" * 60)
+# Find any TIF file in the input directory
+search_path = "/kaggle/input/sen12ms-cr-winter/**/*.tif"
+tif_files = glob.glob(search_path, recursive=True)
+
+if not tif_files:
+    print(f"No TIF files found in {search_path}")
+    # Try alternate path just in case
+    search_path_alt = "/kaggle/input/**/*.tif"
+    tif_files = glob.glob(search_path_alt, recursive=True)
+    
+if not tif_files:
+    print("Could not find any TIF files to analyze!")
+    sys.exit(1)
+
+img_path = tif_files[0]
+print(f"Analyzing file: {img_path}")
 
 img = tifffile.imread(img_path)
 print(f"\nImage shape: {img.shape}")
