@@ -69,23 +69,25 @@
                 ],
                 "args": {
                     "init_type": "kaiming",
-                    "module_name": "conv2former",
+                    "module_name": "ours_double_encoder_splitcaCond_splitcaUnet",
                     "unet": {
-                        "img_channel": 3,
-                        "width": 64,
-                        "middle_blk_num": 1,
-                        "enc_blk_nums": [
+                        "in_channel": 6,
+                        "out_channel": 3,
+                        "inner_channel": 64,
+                        "channel_mults": [
                             1,
-                            1,
-                            1,
-                            1
+                            2,
+                            4,
+                            8,
+                            8
                         ],
-                        "dec_blk_nums": [
-                            1,
-                            1,
-                            1,
-                            1
-                        ]
+                        "attn_res": [
+                            8
+                        ],
+                        "num_head_channels": 32,
+                        "res_blocks": 2,
+                        "dropout": 0,
+                        "image_size": 256
                     },
                     "beta_schedule": {
                         "test": {
