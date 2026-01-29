@@ -70,9 +70,15 @@ class SEN12MS_CR_RGB(data.Dataset):
         cloudy_img = self.load_rgb(s2_cloudy_path)
         cloudfree_img = self.load_rgb(s2_cloudfree_path)
         
+        # DiffCR's NAFNet expects 3 cloudy images (for temporal fusion)
+        # Since SEN12MS-CR has only 1 cloudy image, we stack 3 copies
+        # This creates a 9-channel tensor that will be concatenated with the noisy image (3 channels)
+        # Total: 12 channels as expected by the model
+        cond_image_stacked = torch.stack([cloudy_img, cloudy_img, cloudy_img], dim=0)  # Shape: (3, 3, H, W)
+        
         return {
             'gt_image': cloudfree_img,
-            'cond_image': cloudy_img,
+            'cond_image': cond_image_stacked,
             'path': reference_filename
         }
     
