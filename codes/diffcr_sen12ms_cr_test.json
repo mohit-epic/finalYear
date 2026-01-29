@@ -1,9 +1,11 @@
 {
     "name": "sen12ms_cr_diffcr_test",
+    "phase": "test",
     "gpu_ids": [
         0
     ],
     "seed": -1,
+    "distributed": false,
     "finetune_norm": false,
     "path": {
         "base_dir": "experiments",
@@ -27,7 +29,18 @@
                 "args": {
                     "batch_size": 1,
                     "num_workers": 2,
-                    "pin_memory": true
+                    "pin_memory": true,
+                    "shuffle": false
+                }
+            }
+        },
+        "val": {
+            "which_dataset": {
+                "name": "SEN12MS_CR_RGB",
+                "args": {
+                    "data_root": "/kaggle/input/sen12ms-cr-winter",
+                    "mode": "val",
+                    "data_csv": "/kaggle/working/data.csv"
                 }
             }
         }
