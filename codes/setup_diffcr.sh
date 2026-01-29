@@ -11,6 +11,10 @@ cd /kaggle/working/finalYear/codes/DiffCR || exit 1
 echo "Copying fixed network_x0_dpm_solver.py..."
 cp /kaggle/working/finalYear/codes/DiffCR_models/network_x0_dpm_solver.py models/network_x0_dpm_solver.py
 
+# Copy modified model.py with metric display
+echo "Copying modified model.py with metric display..."
+cp /kaggle/working/finalYear/codes/DiffCR_models/model.py models/model.py
+
 # Copy adapter
 echo "Copying SEN12MS-CR adapter..."
 cp /kaggle/working/finalYear/codes/diffcr_sen12ms_adapter.py data/sen12ms_adapter.py
@@ -36,3 +40,4 @@ echo ""
 echo "Now run:"
 echo "  pip install -q tifffile"
 echo "  python run.py -p test -c config/sen12ms_cr_test.json -gpu 0"
+
